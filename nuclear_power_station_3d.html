@@ -1,0 +1,2021 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PWR-1150 Nuclear Power Station | Undergraduate Multi-Physics Explorer</title>
+  
+  <!-- Three.js and OrbitControls -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+  
+  <!-- KaTeX for rendered LaTeX equations -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/contrib/auto-render.min.js"></script>
+
+  <style>
+    :root {
+      --bg-base: #070b14;
+      --card-bg: rgba(13, 20, 36, 0.90);
+      --card-border: rgba(56, 189, 248, 0.25);
+      --card-border-active: rgba(56, 189, 248, 0.7);
+      --accent-cyan: #38bdf8;
+      --accent-blue: #3b82f6;
+      --accent-orange: #f97316;
+      --accent-green: #10b981;
+      --accent-red: #ef4444;
+      --text-main: #f1f5f9;
+      --text-muted: #94a3b8;
+      --font-mono: 'JetBrains Mono', 'Fira Code', 'Courier New', monospace;
+      --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+    }
+
+    body {
+      background-color: var(--bg-base);
+      color: var(--text-main);
+      font-family: var(--font-sans);
+      overflow: hidden;
+      width: 100vw;
+      height: 100vh;
+    }
+
+    #webgl-container {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 1;
+    }
+
+    /* Top Navigation & Status Bar */
+    header.top-bar {
+      position: absolute;
+      top: 16px;
+      left: 20px;
+      right: 20px;
+      z-index: 10;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      pointer-events: none;
+    }
+
+    .brand-group {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      backdrop-filter: blur(14px);
+      padding: 8px 18px;
+      border-radius: 12px;
+      pointer-events: auto;
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5);
+    }
+
+    .brand-title {
+      font-size: 15px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: #fff;
+    }
+
+    .brand-title .badge {
+      font-size: 10px;
+      font-weight: 800;
+      background: rgba(56, 189, 248, 0.15);
+      color: var(--accent-cyan);
+      border: 1px solid rgba(56, 189, 248, 0.4);
+      padding: 2px 6px;
+      border-radius: 4px;
+      letter-spacing: 0.8px;
+    }
+
+    .brand-subtitle {
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+
+    .top-controls {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      pointer-events: auto;
+    }
+
+    .control-box {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      backdrop-filter: blur(14px);
+      padding: 6px 14px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5);
+    }
+
+    .btn {
+      background: rgba(255, 255, 255, 0.06);
+      color: var(--text-main);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      padding: 6px 14px;
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s ease;
+    }
+
+    .btn:hover {
+      background: rgba(56, 189, 248, 0.15);
+      border-color: var(--accent-cyan);
+      color: #fff;
+    }
+
+    .btn-active {
+      background: rgba(56, 189, 248, 0.25);
+      border-color: var(--accent-cyan);
+      color: var(--accent-cyan);
+    }
+
+    .btn-scram {
+      background: rgba(239, 68, 68, 0.15);
+      border-color: rgba(239, 68, 68, 0.5);
+      color: #fca5a5;
+    }
+    .btn-scram:hover {
+      background: rgba(239, 68, 68, 0.35);
+      border-color: var(--accent-red);
+      color: #fff;
+    }
+
+    .slider-group {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+
+    .slider-group input[type="range"] {
+      -webkit-appearance: none;
+      width: 100px;
+      height: 4px;
+      border-radius: 2px;
+      background: #334155;
+      outline: none;
+    }
+    .slider-group input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background: var(--accent-cyan);
+      cursor: pointer;
+      box-shadow: 0 0 8px var(--accent-cyan);
+    }
+
+    /* Bottom Stage Navigation */
+    nav.bottom-nav {
+      position: absolute;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 10;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      backdrop-filter: blur(14px);
+      padding: 6px 10px;
+      border-radius: 40px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
+    }
+
+    .stage-btn {
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      font-size: 12px;
+      font-weight: 600;
+      padding: 8px 14px;
+      border-radius: 20px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      white-space: nowrap;
+    }
+
+    .stage-btn:hover {
+      color: #fff;
+      background: rgba(255, 255, 255, 0.05);
+    }
+
+    .stage-btn.active {
+      background: var(--accent-blue);
+      color: #fff;
+      box-shadow: 0 0 14px rgba(59, 130, 246, 0.5);
+    }
+
+    .nav-arrow {
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      color: var(--text-main);
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .nav-arrow:hover {
+      background: var(--accent-cyan);
+      color: #000;
+    }
+
+    /* THE CORNER HUD WINDOW (Equations, Science, Explanations) */
+    #corner-hud {
+      position: absolute;
+      top: 76px;
+      right: 20px;
+      width: 440px;
+      max-width: calc(100vw - 40px);
+      max-height: calc(100vh - 160px);
+      z-index: 20;
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      backdrop-filter: blur(18px);
+      border-radius: 16px;
+      box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.7);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      transition: height 0.3s ease, transform 0.25s ease, opacity 0.25s ease;
+    }
+
+    #corner-hud.minimized {
+      height: 48px !important;
+      overflow: hidden;
+    }
+
+    #corner-hud.dock-bottom {
+      top: auto;
+      bottom: 85px;
+    }
+
+    .hud-header {
+      padding: 12px 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: rgba(255, 255, 255, 0.03);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      cursor: default;
+    }
+
+    .hud-title-wrap {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .hud-stage-badge {
+      font-size: 11px;
+      font-weight: 800;
+      padding: 3px 8px;
+      border-radius: 6px;
+      background: rgba(56, 189, 248, 0.15);
+      color: var(--accent-cyan);
+      border: 1px solid rgba(56, 189, 248, 0.3);
+      letter-spacing: 0.5px;
+    }
+
+    .hud-stage-name {
+      font-size: 13px;
+      font-weight: 700;
+      color: #fff;
+    }
+
+    .hud-controls {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .hud-icon-btn {
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      cursor: pointer;
+      width: 26px;
+      height: 26px;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      transition: all 0.2s ease;
+    }
+
+    .hud-icon-btn:hover {
+      background: rgba(255, 255, 255, 0.1);
+      color: #fff;
+    }
+
+    /* Tabs inside Corner HUD */
+    .hud-tabs {
+      display: flex;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      background: rgba(0, 0, 0, 0.2);
+    }
+
+    .hud-tab-btn {
+      flex: 1;
+      padding: 9px 12px;
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.4px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      text-align: center;
+      border-bottom: 2px solid transparent;
+    }
+
+    .hud-tab-btn:hover {
+      color: #fff;
+      background: rgba(255, 255, 255, 0.02);
+    }
+
+    .hud-tab-btn.active {
+      color: var(--accent-cyan);
+      border-bottom-color: var(--accent-cyan);
+      background: rgba(56, 189, 248, 0.06);
+    }
+
+    .hud-body {
+      padding: 16px;
+      overflow-y: auto;
+      flex: 1;
+      font-size: 13px;
+      line-height: 1.6;
+      color: #cbd5e1;
+      user-select: text;
+    }
+
+    .hud-body::-webkit-scrollbar {
+      width: 6px;
+    }
+    .hud-body::-webkit-scrollbar-track {
+      background: rgba(0, 0, 0, 0.2);
+    }
+    .hud-body::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.15);
+      border-radius: 3px;
+    }
+
+    .hud-section-title {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--accent-cyan);
+      margin-bottom: 8px;
+      font-weight: 800;
+    }
+
+    .equation-card {
+      background: rgba(0, 0, 0, 0.35);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 8px;
+      padding: 12px;
+      margin: 10px 0;
+      text-align: center;
+      overflow-x: auto;
+    }
+
+    .equation-label {
+      font-size: 10px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 6px;
+      text-align: left;
+    }
+
+    .telemetry-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12px;
+      margin-top: 6px;
+    }
+
+    .telemetry-table th {
+      text-align: left;
+      padding: 6px 8px;
+      color: var(--text-muted);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .telemetry-table td {
+      padding: 7px 8px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+    }
+
+    .telemetry-val {
+      font-family: var(--font-mono);
+      font-weight: 600;
+      color: #fff;
+    }
+
+    .telemetry-highlight {
+      color: var(--accent-cyan);
+    }
+
+    .hud-footer {
+      padding: 10px 16px;
+      background: rgba(0, 0, 0, 0.25);
+      border-top: 1px solid rgba(255, 255, 255, 0.08);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+    }
+
+    /* Physics Context Modal */
+    #context-modal {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: rgba(3, 7, 18, 0.85);
+      backdrop-filter: blur(20px);
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      opacity: 1;
+      visibility: visible;
+      transition: all 0.3s ease;
+    }
+
+    #context-modal.hidden {
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+    }
+
+    .modal-card {
+      background: #0f172a;
+      border: 1px solid rgba(56, 189, 248, 0.3);
+      width: 860px;
+      max-width: 95vw;
+      max-height: 90vh;
+      border-radius: 20px;
+      box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.9);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .modal-header {
+      padding: 20px 28px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: rgba(255, 255, 255, 0.02);
+    }
+
+    .modal-header h2 {
+      font-size: 20px;
+      font-weight: 800;
+      letter-spacing: 0.5px;
+      color: #fff;
+    }
+
+    .modal-body {
+      padding: 28px;
+      overflow-y: auto;
+      font-size: 14px;
+      line-height: 1.7;
+      color: #cbd5e1;
+      user-select: text;
+    }
+
+    .modal-body h3 {
+      font-size: 15px;
+      color: var(--accent-cyan);
+      margin: 20px 0 8px 0;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .modal-body h3:first-child {
+      margin-top: 0;
+    }
+
+    .physics-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 16px;
+      margin: 16px 0;
+    }
+
+    .physics-pillar {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 12px;
+      padding: 16px;
+    }
+
+    .physics-pillar h4 {
+      font-size: 13px;
+      color: #fff;
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .physics-pillar p {
+      font-size: 12px;
+      color: var(--text-muted);
+      line-height: 1.5;
+    }
+
+    .modal-footer {
+      padding: 18px 28px;
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+      display: flex;
+      justify-content: flex-end;
+      align-items: center;
+      background: rgba(0, 0, 0, 0.2);
+    }
+
+    .btn-primary {
+      background: var(--accent-blue);
+      color: #fff;
+      border: none;
+      padding: 10px 24px;
+      border-radius: 10px;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      box-shadow: 0 4px 15px rgba(59, 130, 246, 0.4);
+      transition: all 0.2s ease;
+    }
+    .btn-primary:hover {
+      background: #2563eb;
+      transform: translateY(-1px);
+    }
+
+    #hover-tooltip {
+      position: absolute;
+      z-index: 50;
+      pointer-events: none;
+      background: rgba(15, 23, 42, 0.95);
+      border: 1px solid var(--accent-cyan);
+      color: #fff;
+      padding: 5px 12px;
+      border-radius: 6px;
+      font-size: 11px;
+      font-weight: 700;
+      opacity: 0;
+      transform: translate(-50%, -130%);
+      transition: opacity 0.15s ease;
+      white-space: nowrap;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+    }
+
+    @media (max-width: 900px) {
+      #corner-hud {
+        width: calc(100vw - 32px);
+        right: 16px;
+        left: 16px;
+        top: auto;
+        bottom: 80px;
+        max-height: 48vh;
+      }
+      nav.bottom-nav {
+        bottom: 12px;
+        max-width: 95vw;
+        overflow-x: auto;
+        justify-content: flex-start;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- WebGL 3D Container -->
+  <div id="webgl-container"></div>
+  <div id="hover-tooltip">Component Name</div>
+
+  <!-- Top Navigation & Controls Bar -->
+  <header class="top-bar">
+    <div class="brand-group">
+      <div class="brand-title">
+        <span>PWR-1150</span>
+        <span class="badge">UNDERGRADUATE MULTI-PHYSICS</span>
+      </div>
+      <div class="brand-subtitle">Pressurised Water Reactor • 3D Thermal-Hydraulic & Kinetics Model</div>
+    </div>
+
+    <div class="top-controls">
+      <div class="control-box">
+        <div class="slider-group">
+          <span>Control Rods:</span>
+          <input type="range" id="rod-slider" min="0" max="100" value="25" title="Insert or withdraw control rods to perturb core reactivity">
+          <span id="rod-val" style="font-family: var(--font-mono); color: var(--accent-cyan); min-width: 32px;">25%</span>
+        </div>
+        <button class="btn btn-scram" id="btn-scram" title="Immediate Reactor Trip (Full Rod Insertion)">SCRAM</button>
+      </div>
+
+      <div class="control-box">
+        <button class="btn btn-active" id="btn-cutaway" title="Toggle cutaway visibility of vessel, dome, and piping">Cutaway: ON</button>
+        <button class="btn" id="btn-context" title="Open Foundational Physics Context">Context Guide</button>
+        <button class="btn" id="btn-reset" title="Reset Camera to Overview">Reset View</button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Bottom Stage Navigation Pill -->
+  <nav class="bottom-nav">
+    <button class="nav-arrow" id="nav-prev" title="Previous Stage">&#8592;</button>
+    <button class="stage-btn active" data-stage="0">0. Overview</button>
+    <button class="stage-btn" data-stage="1">1. Fission Core</button>
+    <button class="stage-btn" data-stage="2">2. Primary Loop</button>
+    <button class="stage-btn" data-stage="3">3. Steam Gen</button>
+    <button class="stage-btn" data-stage="4">4. Turbines</button>
+    <button class="stage-btn" data-stage="5">5. Generator</button>
+    <button class="stage-btn" data-stage="6">6. Cooling</button>
+    <button class="nav-arrow" id="nav-next" title="Next Stage">&#8594;</button>
+  </nav>
+
+  <!-- THE CORNER HUD WINDOW (Equations, Science, Explanations, Live Telemetry) -->
+  <aside id="corner-hud">
+    <div class="hud-header" id="hud-drag-handle">
+      <div class="hud-title-wrap">
+        <span class="hud-stage-badge" id="hud-badge">STAGE 0</span>
+        <span class="hud-stage-name" id="hud-name">Station Overview & Three-Loop Topology</span>
+      </div>
+      <div class="hud-controls">
+        <button class="hud-icon-btn" id="hud-pos-btn" title="Toggle Dock Top/Bottom">&#8645;</button>
+        <button class="hud-icon-btn" id="hud-min-btn" title="Minimize / Expand Window">&#8211;</button>
+      </div>
+    </div>
+
+    <div class="hud-tabs">
+      <button class="hud-tab-btn active" data-tab="science">Science & Principles</button>
+      <button class="hud-tab-btn" data-tab="equations">Governing Equations</button>
+      <button class="hud-tab-btn" data-tab="telemetry">Live Telemetry</button>
+    </div>
+
+    <div class="hud-body" id="hud-content">
+      <!-- Injected dynamically based on active stage and tab -->
+    </div>
+
+    <div class="hud-footer">
+      <button class="btn" id="hud-btn-prev" style="font-size: 11px;">&#8592; Previous</button>
+      <span style="font-size: 11px; color: var(--text-muted); font-family: var(--font-mono);" id="hud-counter">0 / 6</span>
+      <button class="btn btn-active" id="hud-btn-next" style="font-size: 11px;">Next Stage &#8594;</button>
+    </div>
+  </aside>
+
+  <!-- Introductory Physics Context Modal -->
+  <div id="context-modal">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h2>Pressurised Water Reactor (PWR) Multi-Physics Context</h2>
+        <button class="btn" id="modal-close-btn">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p>A commercial nuclear power station is a coupled multi-physics converter spanning seven orders of magnitude in energy scale: translating quantum-mechanical nuclear binding energy (&sim;200 MeV per fission event) into bulk sensible enthalpy, high-enthalpy steam expansion, and finally synchronous 50 Hz three-phase electrical power on the grid.</p>
+        
+        <div class="physics-grid">
+          <div class="physics-pillar">
+            <h4>1. Energy Density Disparity</h4>
+            <p>Chemical combustion rearranges valence electrons (&sim;4 eV per reaction, &sim;50 MJ/kg). Thermal fission of <sup>235</sup>U rearranges nucleons bound by the strong force (&sim;202.5 MeV, &sim;8.2 &times; 10<sup>7</sup> MJ/kg). One 10 g UO<sub>2</sub> pellet produces the thermal energy of 1 tonne of coal.</p>
+          </div>
+          <div class="physics-pillar">
+            <h4>2. Moderation & Self-Regulation</h4>
+            <p>Fission emits fast neutrons (E &sim; 2 MeV). Ordinary light water acts as both coolant and moderator, elastically slowing neutrons to thermal equilibrium (0.025 eV) where the <sup>235</sup>U fission cross-section is 500x higher. Thermal expansion provides an intrinsically negative moderator temperature coefficient of reactivity (&alpha;<sub>T</sub> &lt; 0).</p>
+          </div>
+          <div class="physics-pillar">
+            <h4>3. Three Isolated Loops</h4>
+            <p>To safely contain neutron activation products (e.g. <sup>16</sup>N), heat is stepped across three isolated closed fluid loops: (1) Primary loop at 15.5 MPa liquid, (2) Secondary Rankine cycle at 6.8 MPa steam, and (3) Tertiary open atmospheric heat sink via hyperbolic cooling towers.</p>
+          </div>
+        </div>
+
+        <h3>Interactive Controls & Student Learning Objectives</h3>
+        <p>&bull; <strong>Guided Stage Exploration:</strong> Use the bottom navigation bar or click directly on any 3D station component to fly the camera into detailed cutaway closeups.<br>
+        &bull; <strong>Corner HUD Window:</strong> Toggle between <em>Science</em>, <em>Governing Equations</em> (rendered with KaTeX), and <em>Live Telemetry</em> in the top/bottom corner.<br>
+        &bull; <strong>Reactivity Perturbation:</strong> Adjust the Control Rod Slider to observe how the entire plant responds dynamically (neutron flux, thermal power, steam mass flow, turbine RPM, electrical output, and cooling tower plume).</p>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-primary" id="modal-start-btn">Enter 3D Power Station &rarr;</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    /* =========================================================================
+       STAGE DEFINITIONS & PHYSICS DATABASE
+       ========================================================================= */
+    const stagesData = [
+      {
+        id: 0,
+        badge: "OVERVIEW",
+        name: "Full Plant Architecture & Three-Loop Cascade",
+        camPos: { x: 0, y: 38, z: 58 },
+        camTarget: { x: 0, y: 7, z: 0 },
+        science: `
+          <div class="hud-section-title">The Three-Loop Thermodynamic Isolation System</div>
+          <p>The PWR architecture guarantees that radioactive activation products created in the core never enter the turbine hall or atmosphere. Energy transfers sequentially across three sealed loops:</p>
+          <ul style="margin: 8px 0 10px 18px; font-size: 12px; line-height: 1.6;">
+            <li><strong style="color: #f87171;">Primary Loop (15.5 MPa):</strong> Subcooled liquid water circulates through the reactor core to extract sensible heat at 325°C without bulk boiling.</li>
+            <li><strong style="color: #38bdf8;">Secondary Loop (6.8 MPa):</strong> Demineralised water boils in the steam generators, expands through HP/LP turbines to do shaft work, and condenses at 5 kPa.</li>
+            <li><strong style="color: #34d399;">Tertiary Loop (Atmospheric):</strong> Circulating cooling water extracts condenser heat and rejects it to the ambient troposphere via natural-draught evaporative cooling towers.</li>
+          </ul>
+          <p>Click on any station subsystem in 3D or use the bottom navigation buttons to fly into the respective engineering stages.</p>
+        `,
+        equations: `
+          <div class="equation-label">Overall Plant Thermal Efficiency</div>
+          <div class="equation-card">
+            $$\\eta_{\\text{th}} = \\frac{\\dot{W}_{\\text{net}}}{\\dot{Q}_{\\text{core}}} = \\frac{P_{\\text{elec}}}{\\dot{Q}_{\\text{core}}} \\approx 33.8\\%$$
+          </div>
+          <div class="equation-label">Carnot Theoretical Upper Bound</div>
+          <div class="equation-card">
+            $$\\eta_{\\text{Carnot}} = 1 - \\frac{T_C}{T_H} = 1 - \\frac{306.15\\text{ K}}{598.15\\text{ K}} \\approx 48.8\\%$$
+          </div>
+          <div class="equation-label">Energy Release per Fission Event</div>
+          <div class="equation-card">
+            $$\\Delta E = \\Delta m \\cdot c^2 \\approx 202.5\\text{ MeV} = 3.24 \\times 10^{-11}\\text{ J}$$
+          </div>
+        `,
+        telemetry: () => [
+          { label: "Core Thermal Power", val: (3400 * plantState.relPower).toFixed(0), unit: "MW(th)", highlight: true },
+          { label: "Net Electrical Output", val: (1150 * plantState.relPower).toFixed(0), unit: "MW(e)", highlight: true },
+          { label: "Thermodynamic Efficiency", val: "33.8", unit: "%" },
+          { label: "Total Primary Mass Flow", val: "17,500", unit: "kg/s" },
+          { label: "Secondary Steam Mass Flow", val: (1910 * plantState.relPower).toFixed(0), unit: "kg/s" },
+          { label: "Condenser Heat Rejection", val: (2250 * plantState.relPower).toFixed(0), unit: "MW(th)" }
+        ]
+      },
+      {
+        id: 1,
+        badge: "STAGE 1",
+        name: "Reactor Core, Fission & Neutron Kinetics",
+        camPos: { x: -22, y: 11, z: 12 },
+        camTarget: { x: -22, y: 7, z: 0 },
+        science: `
+          <div class="hud-section-title">Quantum Fission & Neutron Thermalisation</div>
+          <p>Inside the Reactor Pressure Vessel (RPV), fuel assemblies containing UO<sub>2</sub> sintered pellets (3.5%–5% enriched <sup>235</sup>U) sustain a controlled critical chain reaction.</p>
+          <p style="margin-top: 8px;">Fast neutrons released at ~2 MeV undergo elastic collisions with hydrogen nuclei (<sup>1</sup>H) in the coolant water, thermalising down to 0.025 eV. At this low energy, the microscopic fission cross-section &sigma;<sub>f</sub> rises sharply from ~1.2 barns to 585 barns.</p>
+          <p style="margin-top: 8px;">The blue glow is <strong>Cherenkov Radiation</strong>: beta electrons travel through water faster than the local phase velocity of light (c/n<sub>water</sub> &approx; 0.75c), emitting a coherent electromagnetic shockwave.</p>
+        `,
+        equations: `
+          <div class="equation-label">Six-Factor Formula & Criticality</div>
+          <div class="equation-card">
+            $$k_{\\text{eff}} = \\eta \\cdot f \\cdot p \\cdot \\epsilon \\cdot P_{\\text{FNL}} \\cdot P_{\\text{TNL}} = 1.000$$
+          </div>
+          <div class="equation-label">Volumetric Thermal Power Density</div>
+          <div class="equation-card">
+            $$q'''(\\mathbf{r}) = \\Sigma_f \\cdot \\Phi(\\mathbf{r}) \\cdot E_f$$
+          </div>
+          <div class="equation-label">Reactivity Feedback Definition</div>
+          <div class="equation-card">
+            $$\\rho = \\frac{k_{\\text{eff}} - 1}{k_{\\text{eff}}}, \\quad \\alpha_T = \\frac{\\partial \\rho}{\\partial T_m} < 0$$
+          </div>
+        `,
+        telemetry: () => [
+          { label: "Effective Multiplication (k_eff)", val: plantState.kEff.toFixed(4), unit: "-", highlight: true },
+          { label: "Core Reactivity (ρ)", val: ((plantState.kEff - 1) / plantState.kEff * 1e5).toFixed(1), unit: "pcm", highlight: true },
+          { label: "Thermal Neutron Flux (Φ)", val: (3.2 * plantState.relPower).toFixed(2) + " × 10¹³", unit: "n/(cm²·s)" },
+          { label: "Control Rod Insertion", val: plantState.rodPos + "%", unit: "" },
+          { label: "Peak Fuel Pellet Centreline", val: (400 + 900 * plantState.relPower).toFixed(0), unit: "°C" },
+          { label: "UO2 Melting Temperature", val: "2,865", unit: "°C" }
+        ]
+      },
+      {
+        id: 2,
+        badge: "STAGE 2",
+        name: "Fuel Conduction & Primary Loop Pressurisation",
+        camPos: { x: -14, y: 15, z: 9 },
+        camTarget: { x: -19, y: 9, z: -2 },
+        science: `
+          <div class="hud-section-title">Fourier Conduction & The Pressuriser Cushion</div>
+          <p>Thermal power conducts radially through the UO<sub>2</sub> pellet, across the helium gap, and through the low-absorption Zircaloy cladding into the primary coolant.</p>
+          <p style="margin-top: 8px;"><strong>Why 15.5 MPa?</strong> At atmospheric pressure, water boils at 100°C. By clamping the primary loop to 15.5 MPa using an electrically heated <strong>Pressuriser</strong>, the saturation temperature is elevated to 344.8°C. This maintains a ~20°C subcooling margin above the 325°C core exit, preventing bulk boiling and void instabilities.</p>
+        `,
+        equations: `
+          <div class="equation-label">Radial Fourier Heat Conduction in Pellet</div>
+          <div class="equation-card">
+            $$T_{\\text{centre}} - T_{\\text{surface}} = \\frac{q''' R_f^2}{4 \\bar{k}_f} = \\frac{q'}{4\\pi \\bar{k}_f}$$
+          </div>
+          <div class="equation-label">Primary Sensible Heat Removal Rate</div>
+          <div class="equation-card">
+            $$\\dot{Q}_{\\text{core}} = \\dot{m}_p \\cdot c_{p,1} \\left( T_{\\text{hot}} - T_{\\text{cold}} \\right)$$
+          </div>
+          <div class="equation-label">Clausius-Clapeyron Phase Boundary</div>
+          <div class="equation-card">
+            $$\\frac{dP}{dT} = \\frac{L}{T \\,\\Delta v} \\implies T_{\\text{sat}}(15.5\\text{ MPa}) = 344.8^\\circ\\text{C}$$
+          </div>
+        `,
+        telemetry: () => [
+          { label: "Primary Operating Pressure", val: "15.50", unit: "MPa", highlight: true },
+          { label: "Core Hot-Leg Exit Temp (T_hot)", val: (292 + (325 - 292) * plantState.relPower).toFixed(1), unit: "°C", highlight: true },
+          { label: "Core Cold-Leg Inlet Temp (T_cold)", val: "292.0", unit: "°C" },
+          { label: "Saturation Temp @ 15.5 MPa", val: "344.8", unit: "°C" },
+          { label: "Subcooling Margin (ΔT_sub)", val: (344.8 - (292 + 33 * plantState.relPower)).toFixed(1), unit: "°C" },
+          { label: "Primary Coolant Mass Flow", val: "17,500", unit: "kg/s" }
+        ]
+      },
+      {
+        id: 3,
+        badge: "STAGE 3",
+        name: "U-Tube Steam Generator & Phase Change",
+        camPos: { x: -28, y: 15, z: 9 },
+        camTarget: { x: -26, y: 11, z: -1 },
+        science: `
+          <div class="hud-section-title">Boundary-Separated Boiling Heat Transfer</div>
+          <p>The Steam Generator is a massive shell-and-tube heat exchanger containing over 5,000 inverted Inconel-690 U-tubes. Primary subcooled water flows inside the tubes at 15.5 MPa and 325°C.</p>
+          <p style="margin-top: 8px;">Feedwater in the lower-pressure secondary shell (6.8 MPa, where T<sub>sat</sub> = 283.8°C) boils vigorously on the outer tube surfaces. Centrifugal moisture separators and chevron dryers in the upper dome dry the steam to quality x &ge; 99.75% before entering the main steam line.</p>
+        `,
+        equations: `
+          <div class="equation-label">Log-Mean Temperature Difference (LMTD)</div>
+          <div class="equation-card">
+            $$\\dot{Q}_{\\text{SG}} = U \\cdot A \\cdot \\Delta T_{\\text{lm}}, \\quad \\Delta T_{\\text{lm}} = \\frac{\\Delta T_1 - \\Delta T_2}{\\ln(\\Delta T_1 / \\Delta T_2)}$$
+          </div>
+          <div class="equation-label">Secondary Enthalpy Balance & Boiling</div>
+          <div class="equation-card">
+            $$\\dot{Q}_{\\text{SG}} = \\dot{m}_s \\left[ c_{p,2}\\left(T_{\\text{sat}} - T_{\\text{feed}}\\right) + h_{fg} \\right]$$
+          </div>
+          <div class="equation-label">Latent Heat of Vaporisation @ 6.8 MPa</div>
+          <div class="equation-card">
+            $$h_{fg} \\approx 1510\\text{ kJ/kg}, \\quad x = \\frac{m_{\\text{vap}}}{m_{\\text{total}}} \\ge 0.998$$
+          </div>
+        `,
+        telemetry: () => [
+          { label: "Secondary Steam Pressure", val: "6.80", unit: "MPa", highlight: true },
+          { label: "Steam Saturation Temperature", val: "283.8", unit: "°C" },
+          { label: "Steam Generation Rate", val: (1910 * plantState.relPower).toFixed(0), unit: "kg/s", highlight: true },
+          { label: "Exit Steam Quality (x)", val: "0.998", unit: "-" },
+          { label: "Total Inconel Heat Area", val: "10,500", unit: "m²" },
+          { label: "Feedwater Inlet Temp", val: "220.0", unit: "°C" }
+        ]
+      },
+      {
+        id: 4,
+        badge: "STAGE 4",
+        name: "HP & LP Steam Turbines (Rankine Expansion)",
+        camPos: { x: 3, y: 15, z: 20 },
+        camTarget: { x: 3, y: 8, z: 0 },
+        science: `
+          <div class="hud-section-title">Steady-Flow Enthalpy Extraction to Shaft Torque</div>
+          <p>Dry saturated steam expands through a tandem-compound turbine train: one High-Pressure (HP) turbine cylinder and two double-flow Low-Pressure (LP) cylinders on a rigid 1500 rpm shaft.</p>
+          <p style="margin-top: 8px;">As steam expands and cools, moisture droplets condense. To protect long LP aerofoil blades against supersonic droplet erosion, exhaust from the HP turbine passes through a <strong>Moisture Separator Reheater (MSR)</strong> before entering the LP turbines.</p>
+        `,
+        equations: `
+          <div class="equation-label">Steady-Flow Energy Equation (Turbine Shaft Power)</div>
+          <div class="equation-card">
+            $$\\dot{W}_{\\text{turbine}} = \\dot{m}_s (h_{\\text{in}} - h_{\\text{out}}) = \\dot{m}_s \\,\\eta_t \\,(h_{\\text{in}} - h_{\\text{out},s})$$
+          </div>
+          <div class="equation-label">Euler Turbomachinery Equation</div>
+          <div class="equation-card">
+            $$w_{\\text{blade}} = u_1 v_{\\theta 1} - u_2 v_{\\theta 2} = \\omega \\left( r_1 v_{\\theta 1} - r_2 v_{\\theta 2} \\right)$$
+          </div>
+          <div class="equation-label">Isentropic Expansion Efficiency</div>
+          <div class="equation-card">
+            $$\\eta_t = \\frac{h_{\\text{in}} - h_{\\text{out}}}{h_{\\text{in}} - h_{\\text{out},s}} \\approx 89.5\\%$$
+          </div>
+        `,
+        telemetry: () => [
+          { label: "Turbine Shaft Speed", val: (1500 * Math.min(1.0, Math.sqrt(plantState.relPower))).toFixed(0), unit: "rpm", highlight: true },
+          { label: "Mechanical Shaft Power", val: (1168 * plantState.relPower).toFixed(0), unit: "MW(mech)", highlight: true },
+          { label: "HP Turbine Inlet Enthalpy", val: "2775", unit: "kJ/kg" },
+          { label: "LP Turbine Exhaust Enthalpy", val: "2160", unit: "kJ/kg" },
+          { label: "Isentropic Turbine Efficiency", val: "89.5", unit: "%" },
+          { label: "Exhaust Steam Moisture", val: "10.2", unit: "%" }
+        ]
+      },
+      {
+        id: 5,
+        badge: "STAGE 5",
+        name: "Synchronous Turbo-Generator & 400 kV Grid",
+        camPos: { x: 15, y: 13, z: 18 },
+        camTarget: { x: 14, y: 7, z: 5 },
+        science: `
+          <div class="hud-section-title">Faraday Induction & Grid Synchronisation</div>
+          <p>The turbine shaft drives a 4-pole synchronous generator rotor. A direct-current exciter establishes a rotating magnetic dipole field <strong>B</strong>.</p>
+          <p style="margin-top: 8px;">As this field sweeps past stationary copper stator coils arranged at 120° spatial offsets, it induces three-phase sinusoidal electromotive force at 50 Hz. Outside the turbine hall, the main step-up transformer converts the 24 kV generator output to 400 kV, reducing line transmission current by a factor of 16.7 and slashing I<sup>2</sup>R resistive grid transmission losses by a factor of 278.</p>
+        `,
+        equations: `
+          <div class="equation-label">Faraday-Lenz Law of Induction</div>
+          <div class="equation-card">
+            $$\\mathcal{E}(t) = -N_{\\text{turns}} \\frac{d\\Phi_B}{dt} = N B A \\omega_e \\sin(\\omega_e t)$$
+          </div>
+          <div class="equation-label">Grid Frequency Synchronisation</div>
+          <div class="equation-card">
+            $$f = \\frac{P_{\\text{poles}} \\cdot N_{\\text{rpm}}}{120} = \\frac{4 \\cdot 1500}{120} = 50.0\\text{ Hz}$$
+          </div>
+          <div class="equation-label">Three-Phase Active Real Power & Joule Losses</div>
+          <div class="equation-card">
+            $$P_{\\text{elec}} = \\sqrt{3} \\, V_{\\text{LL}} \\, I_L \\cos\\phi, \\quad P_{\\text{loss}} = 3 I_L^2 R_{\\text{line}} = \\frac{P^2 R}{V_{\\text{grid}}^2}$$
+          </div>
+        `,
+        telemetry: () => [
+          { label: "Net Electrical Output", val: (1150 * plantState.relPower).toFixed(0), unit: "MW(e)", highlight: true },
+          { label: "Generator Terminal Voltage", val: "24.0", unit: "kV" },
+          { label: "Grid Transmission Voltage", val: "400.0", unit: "kV", highlight: true },
+          { label: "Grid Frequency (f)", val: "50.00", unit: "Hz" },
+          { label: "Power Factor (cos φ)", val: "0.92", unit: "lagging" },
+          { label: "Generator Efficiency (η_gen)", val: "98.5", unit: "%" }
+        ]
+      },
+      {
+        id: 6,
+        badge: "STAGE 6",
+        name: "Surface Condenser & Hyperbolic Cooling Tower",
+        camPos: { x: 22, y: 24, z: 28 },
+        camTarget: { x: 23, y: 11, z: -8 },
+        science: `
+          <div class="hud-section-title">Second-Law Entropy Rejection & Natural Draught</div>
+          <p>By the Kelvin-Planck statement of the Second Law of Thermodynamics, a closed heat cycle must reject waste heat to an external sink. Exhaust steam collapses on cold condenser tubes maintained at a high vacuum (5 kPa, T<sub>sat</sub> &approx; 33°C), maximizing the Rankine enthalpy drop.</p>
+          <p style="margin-top: 8px;">Tertiary warm water is pumped to the <strong>Hyperbolic Natural-Draught Cooling Tower</strong>. Water sprays over trickle fill packs; ~2% evaporates, cooling the bulk water down to 22°C. Because warm humid air is less dense than ambient air, buoyancy drives a natural stack-effect draught through the aerodynamic hyperbolic shell without mechanical fans.</p>
+        `,
+        equations: `
+          <div class="equation-label">Surface Condenser Heat Rejection</div>
+          <div class="equation-card">
+            $$\\dot{Q}_{\\text{cond}} = \\dot{m}_s \\left( h_2 - h_3 \\right) = \\dot{m}_{\\text{cw}} \\, c_{p,\\text{cw}} \\left( T_{\\text{cw,out}} - T_{\\text{cw,in}} \\right)$$
+          </div>
+          <div class="equation-label">Hyperbolic Stack Buoyancy Draught</div>
+          <div class="equation-card">
+            $$\\Delta P_{\\text{draught}} = g \\cdot H_{\\text{tower}} \\left( \\rho_{\\text{ambient}} - \\rho_{\\text{plume}} \\right) \\approx \\frac{1}{2} \\rho_{\\text{plume}} v_{\\text{exit}}^2$$
+          </div>
+          <div class="equation-label">Clausius Entropy Rejection to Troposphere</div>
+          <div class="equation-card">
+            $$\\Delta S_{\\text{sink}} = \\frac{\\dot{Q}_{\\text{cond}}}{T_{\\text{ambient}}} > 0$$
+          </div>
+        `,
+        telemetry: () => [
+          { label: "Condenser Operating Pressure", val: "5.0", unit: "kPa abs", highlight: true },
+          { label: "Condenser Saturation Temp", val: "32.9", unit: "°C" },
+          { label: "Waste Heat Rejected", val: (2250 * plantState.relPower).toFixed(0), unit: "MW(th)", highlight: true },
+          { label: "Cooling Tower Height", val: "155", unit: "m" },
+          { label: "Cooling Water Circ Flow", val: "38,000", unit: "kg/s" },
+          { label: "Evaporative Plume Loss", val: (2.1 * plantState.relPower).toFixed(1), unit: "%" }
+        ]
+      }
+    ];
+
+    /* =========================================================================
+       GLOBAL PLANT STATE & CONTROLS
+       ========================================================================= */
+    const plantState = {
+      activeStage: 0,
+      activeTab: 'science',
+      rodPos: 25,          // 25% nominal = 100% full thermal power equilibrium
+      kEff: 1.0000,
+      relPower: 1.00,
+      cutaway: true,
+      hudMinimized: false,
+      hudDockBottom: false
+    };
+
+    function updateReactivityModel() {
+      const dev = 25 - plantState.rodPos;
+      plantState.kEff = 1.0000 + (dev * 0.0012);
+      
+      if (plantState.rodPos >= 90) {
+        plantState.relPower = 0.07; // Decay heat floor
+      } else {
+        plantState.relPower = Math.max(0.07, Math.min(1.15, 1.0 + (dev * 0.006)));
+      }
+
+      document.getElementById('rod-val').innerText = plantState.rodPos + '%';
+
+      if (plantState.activeTab === 'telemetry') {
+        renderHudTelemetry();
+      }
+
+      if (window.reactorCoreLight) {
+        window.reactorCoreLight.intensity = plantState.relPower * 3.5;
+      }
+      if (window.controlRodGroup) {
+        const targetY = 8.5 - (plantState.rodPos / 100) * 3.7;
+        window.controlRodGroup.position.y = targetY;
+      }
+    }
+
+    /* =========================================================================
+       CORNER HUD WINDOW RENDERING
+       ========================================================================= */
+    function renderHud() {
+      const data = stagesData[plantState.activeStage];
+      document.getElementById('hud-badge').innerText = data.badge;
+      document.getElementById('hud-name').innerText = data.name;
+      document.getElementById('hud-counter').innerText = `${plantState.activeStage} / 6`;
+
+      document.querySelectorAll('.hud-tab-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.tab === plantState.activeTab);
+      });
+
+      const container = document.getElementById('hud-content');
+      if (plantState.activeTab === 'science') {
+        container.innerHTML = data.science;
+      } else if (plantState.activeTab === 'equations') {
+        container.innerHTML = data.equations;
+        if (window.renderMathInElement) {
+          renderMathInElement(container, {
+            delimiters: [
+              { left: '$$', right: '$$', display: true },
+              { left: '$', right: '$', display: false }
+            ],
+            throwOnError: false
+          });
+        }
+      } else if (plantState.activeTab === 'telemetry') {
+        renderHudTelemetry();
+      }
+    }
+
+    function renderHudTelemetry() {
+      const data = stagesData[plantState.activeStage];
+      const rows = data.telemetry();
+      let html = `
+        <div class="hud-section-title">Live Thermodynamic & Kinetic Telemetry</div>
+        <table class="telemetry-table">
+          <thead>
+            <tr>
+              <th>Physical Parameter</th>
+              <th style="text-align: right;">Calculated Value</th>
+              <th style="text-align: right; width: 60px;">Unit</th>
+            </tr>
+          </thead>
+          <tbody>
+      `;
+      rows.forEach(r => {
+        html += `
+          <tr>
+            <td>${r.label}</td>
+            <td style="text-align: right;" class="telemetry-val ${r.highlight ? 'telemetry-highlight' : ''}">${r.val}</td>
+            <td style="text-align: right; color: var(--text-muted); font-family: var(--font-mono); font-size: 10px;">${r.unit}</td>
+          </tr>
+        `;
+      });
+      html += `</tbody></table>`;
+      document.getElementById('hud-content').innerHTML = html;
+    }
+
+    function setStage(idx) {
+      if (idx < 0) idx = 0;
+      if (idx >= stagesData.length) idx = stagesData.length - 1;
+      plantState.activeStage = idx;
+
+      document.querySelectorAll('.stage-btn').forEach(btn => {
+        btn.classList.toggle('active', parseInt(btn.dataset.stage) === idx);
+      });
+
+      const targetData = stagesData[idx];
+      flyCameraTo(targetData.camPos, targetData.camTarget, 1.2);
+      renderHud();
+    }
+
+    /* =========================================================================
+       THREE.JS 3D SCENE GENERATION
+       ========================================================================= */
+    let scene, camera, renderer, controls;
+    let animParticles = [];
+    let steamBubbles = [];
+    let coolingTowerPlume = [];
+    let turbineRotors = [];
+    let interactiveMeshes = [];
+    let camTween = null;
+
+    function initThree() {
+      const container = document.getElementById('webgl-container');
+      
+      scene = new THREE.Scene();
+      scene.background = new THREE.Color(0x070b14);
+      scene.fog = new THREE.FogExp2(0x070b14, 0.009);
+
+      camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.5, 500);
+      camera.position.set(0, 38, 58);
+
+      renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false, powerPreference: 'high-performance' });
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+      renderer.toneMapping = THREE.ACESFilmicToneMapping;
+      renderer.toneMappingExposure = 1.15;
+      renderer.shadowMap.enabled = true;
+      renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+      container.appendChild(renderer.domElement);
+
+      controls = new THREE.OrbitControls(camera, renderer.domElement);
+      controls.enableDamping = true;
+      controls.dampingFactor = 0.05;
+      controls.target.set(0, 7, 0);
+      controls.maxPolarAngle = Math.PI / 2 - 0.02;
+      controls.minDistance = 5;
+      controls.maxDistance = 150;
+
+      setupLighting();
+      buildTerrain();
+      buildContainmentAndNuclearCore();
+      buildTurbineHallAndGenerators();
+      buildOutdoorSwitchyard();
+      buildCoolingTower();
+      setupParticleSystems();
+      setupInteraction();
+
+      window.addEventListener('resize', onWindowResize);
+
+      renderHud();
+      updateReactivityModel();
+      animate();
+    }
+
+    function setupLighting() {
+      const ambientLight = new THREE.AmbientLight(0x2d3748, 1.3);
+      scene.add(ambientLight);
+
+      const sunLight = new THREE.DirectionalLight(0xfff7ed, 1.5);
+      sunLight.position.set(40, 60, 30);
+      sunLight.castShadow = true;
+      sunLight.shadow.mapSize.width = 2048;
+      sunLight.shadow.mapSize.height = 2048;
+      sunLight.shadow.camera.near = 10;
+      sunLight.shadow.camera.far = 160;
+      sunLight.shadow.camera.left = -50;
+      sunLight.shadow.camera.right = 50;
+      sunLight.shadow.camera.top = 50;
+      sunLight.shadow.camera.bottom = -50;
+      sunLight.shadow.bias = -0.0005;
+      scene.add(sunLight);
+
+      const skyLight = new THREE.DirectionalLight(0x38bdf8, 0.6);
+      skyLight.position.set(-30, 40, -30);
+      scene.add(skyLight);
+    }
+
+    function buildTerrain() {
+      const slabGeo = new THREE.BoxGeometry(90, 1.5, 60);
+      const slabMat = new THREE.MeshStandardMaterial({ color: 0x1e2530, roughness: 0.85, metalness: 0.1 });
+      const slab = new THREE.Mesh(slabGeo, slabMat);
+      slab.position.y = -0.75;
+      slab.receiveShadow = true;
+      scene.add(slab);
+
+      const grid = new THREE.GridHelper(90, 45, 0x38bdf8, 0x1f293d);
+      grid.position.y = 0.02;
+      scene.add(grid);
+
+      const roadGeo = new THREE.PlaneGeometry(84, 3);
+      const roadMat = new THREE.MeshStandardMaterial({ color: 0x111622, roughness: 0.9 });
+      const road = new THREE.Mesh(roadGeo, roadMat);
+      road.rotation.x = -Math.PI / 2;
+      road.position.set(0, 0.03, 22);
+      scene.add(road);
+    }
+
+    function buildContainmentAndNuclearCore() {
+      const contGroup = new THREE.Group();
+      contGroup.position.set(-22, 0, 0);
+
+      const baseGeo = new THREE.CylinderGeometry(15, 15.5, 2, 48);
+      const baseMat = new THREE.MeshStandardMaterial({ color: 0x334155, roughness: 0.8 });
+      const base = new THREE.Mesh(baseGeo, baseMat);
+      base.position.y = 1;
+      base.receiveShadow = true;
+      contGroup.add(base);
+
+      const wallGeo = new THREE.CylinderGeometry(14, 14, 20, 48, 1, true, Math.PI * 0.5, Math.PI);
+      const wallMat = new THREE.MeshStandardMaterial({ color: 0x475569, roughness: 0.9, side: THREE.DoubleSide });
+      const wall = new THREE.Mesh(wallGeo, wallMat);
+      wall.position.y = 12;
+      wall.castShadow = true;
+      wall.receiveShadow = true;
+      contGroup.add(wall);
+      window.containmentWall = wall;
+
+      const domeGeo = new THREE.SphereGeometry(14, 48, 24, Math.PI * 0.5, Math.PI, 0, Math.PI / 2);
+      const domeMat = new THREE.MeshStandardMaterial({ color: 0x334155, roughness: 0.8, side: THREE.DoubleSide });
+      const dome = new THREE.Mesh(domeGeo, domeMat);
+      dome.position.y = 22;
+      dome.castShadow = true;
+      contGroup.add(dome);
+      window.containmentDome = dome;
+
+      const bioShieldGeo = new THREE.CylinderGeometry(5.2, 5.5, 10, 32, 1, true, Math.PI * 0.5, Math.PI);
+      const bioMat = new THREE.MeshStandardMaterial({ color: 0x242e3d, roughness: 0.95, side: THREE.DoubleSide });
+      const bioShield = new THREE.Mesh(bioShieldGeo, bioMat);
+      bioShield.position.set(0, 5, 0);
+      contGroup.add(bioShield);
+
+      // Reactor Pressure Vessel (RPV)
+      const rpvGroup = new THREE.Group();
+      rpvGroup.position.set(0, 2.5, 0);
+
+      const rpvBodyGeo = new THREE.CylinderGeometry(3.2, 3.2, 9, 32, 1, true, Math.PI * 0.5, Math.PI);
+      const rpvMat = new THREE.MeshStandardMaterial({ color: 0x64748b, metalness: 0.6, roughness: 0.3, side: THREE.DoubleSide });
+      const rpvBody = new THREE.Mesh(rpvBodyGeo, rpvMat);
+      rpvBody.position.y = 4.5;
+      rpvGroup.add(rpvBody);
+
+      const rpvBottomGeo = new THREE.SphereGeometry(3.2, 32, 16, Math.PI * 0.5, Math.PI, Math.PI / 2, Math.PI / 2);
+      const rpvBottom = new THREE.Mesh(rpvBottomGeo, rpvMat);
+      rpvBottom.position.y = 0;
+      rpvGroup.add(rpvBottom);
+
+      const rpvHeadGeo = new THREE.SphereGeometry(3.2, 32, 16, Math.PI * 0.5, Math.PI, 0, Math.PI / 2);
+      const rpvHead = new THREE.Mesh(rpvHeadGeo, rpvMat);
+      rpvHead.position.y = 9;
+      rpvGroup.add(rpvHead);
+
+      // Fuel assemblies
+      const coreZone = new THREE.Group();
+      coreZone.position.set(0, 2.8, 0);
+      const fuelMat = new THREE.MeshStandardMaterial({ color: 0x94a3b8, metalness: 0.7, roughness: 0.2 });
+      for (let ix = -1.5; ix <= 1.5; ix += 1.0) {
+        for (let iz = -1.5; iz <= 1.5; iz += 1.0) {
+          if (Math.hypot(ix, iz) > 2.0) continue;
+          const fuelGeo = new THREE.BoxGeometry(0.7, 4.2, 0.7);
+          const fuelMesh = new THREE.Mesh(fuelGeo, fuelMat);
+          fuelMesh.position.set(ix, 2.1, iz);
+          coreZone.add(fuelMesh);
+        }
+      }
+      rpvGroup.add(coreZone);
+
+      // Cherenkov Blue Core Glow
+      const glowGeo = new THREE.CylinderGeometry(2.4, 2.4, 4.5, 32);
+      const glowMat = new THREE.MeshBasicMaterial({ color: 0x00d2ff, transparent: true, opacity: 0.35, blending: THREE.AdditiveBlending });
+      const coreGlow = new THREE.Mesh(glowGeo, glowMat);
+      coreGlow.position.y = 4.8;
+      rpvGroup.add(coreGlow);
+
+      const coreLight = new THREE.PointLight(0x00f0ff, 3.5, 16);
+      coreLight.position.set(0, 4.8, 0);
+      rpvGroup.add(coreLight);
+      window.reactorCoreLight = coreLight;
+
+      // Control Rods
+      const crGroup = new THREE.Group();
+      crGroup.position.set(0, 7.5, 0);
+      const crdMat = new THREE.MeshStandardMaterial({ color: 0xef4444, metalness: 0.8, roughness: 0.2 });
+      for (let ix = -1.2; ix <= 1.2; ix += 1.2) {
+        for (let iz = -1.2; iz <= 1.2; iz += 1.2) {
+          const rodGeo = new THREE.CylinderGeometry(0.08, 0.08, 4.2, 12);
+          const rod = new THREE.Mesh(rodGeo, crdMat);
+          rod.position.set(ix, 0, iz);
+          crGroup.add(rod);
+        }
+      }
+      const spider = new THREE.Mesh(new THREE.BoxGeometry(3.0, 0.2, 3.0), crdMat);
+      spider.position.y = 2.1;
+      crGroup.add(spider);
+      rpvGroup.add(crGroup);
+      window.controlRodGroup = crGroup;
+
+      rpvGroup.userData = { stageId: 1, name: "Reactor Core & Pressure Vessel (RPV)" };
+      interactiveMeshes.push(rpvGroup);
+      contGroup.add(rpvGroup);
+
+      // Steam Generator (SG)
+      const sgGroup = new THREE.Group();
+      sgGroup.position.set(-6, 2.5, -3);
+
+      const sgLowGeo = new THREE.CylinderGeometry(2.0, 2.0, 9, 32, 1, true, Math.PI * 0.5, Math.PI);
+      const sgMat = new THREE.MeshStandardMaterial({ color: 0x64748b, metalness: 0.6, roughness: 0.35, side: THREE.DoubleSide });
+      const sgLow = new THREE.Mesh(sgLowGeo, sgMat);
+      sgLow.position.y = 4.5;
+      sgGroup.add(sgLow);
+
+      const sgConeGeo = new THREE.CylinderGeometry(2.7, 2.0, 2.5, 32, 1, true, Math.PI * 0.5, Math.PI);
+      const sgCone = new THREE.Mesh(sgConeGeo, sgMat);
+      sgCone.position.y = 10.25;
+      sgGroup.add(sgCone);
+
+      const sgUpGeo = new THREE.CylinderGeometry(2.7, 2.7, 5, 32, 1, true, Math.PI * 0.5, Math.PI);
+      const sgUp = new THREE.Mesh(sgUpGeo, sgMat);
+      sgUp.position.y = 14;
+      sgGroup.add(sgUp);
+
+      // U-Tube Bundle
+      const uTubeGroup = new THREE.Group();
+      const tubeMat = new THREE.MeshStandardMaterial({ color: 0xd4d4d8, metalness: 0.8, roughness: 0.2 });
+      for (let r = 0.4; r <= 1.4; r += 0.3) {
+        for (let angle = -0.5; angle <= 0.5; angle += 0.5) {
+          const uGeo = new THREE.TorusGeometry(r, 0.05, 8, 24, Math.PI);
+          const uMesh = new THREE.Mesh(uGeo, tubeMat);
+          uMesh.position.set(angle * 0.6, 7.5, 0);
+          uMesh.rotation.z = Math.PI;
+          uTubeGroup.add(uMesh);
+
+          const legGeo = new THREE.CylinderGeometry(0.05, 0.05, 6, 8);
+          const leg1 = new THREE.Mesh(legGeo, tubeMat);
+          leg1.position.set(angle * 0.6 - r, 4.5, 0);
+          const leg2 = new THREE.Mesh(legGeo, tubeMat);
+          leg2.position.set(angle * 0.6 + r, 4.5, 0);
+          uTubeGroup.add(leg1);
+          uTubeGroup.add(leg2);
+        }
+      }
+      sgGroup.add(uTubeGroup);
+
+      sgGroup.userData = { stageId: 3, name: "U-Tube Steam Generator (Phase Change)" };
+      interactiveMeshes.push(sgGroup);
+      contGroup.add(sgGroup);
+
+      // Pressuriser (PZR)
+      const pzrGroup = new THREE.Group();
+      pzrGroup.position.set(4.5, 3.5, -4);
+
+      const pzrCylGeo = new THREE.CylinderGeometry(1.2, 1.2, 8, 24);
+      const pzrMat = new THREE.MeshStandardMaterial({ color: 0x475569, metalness: 0.65, roughness: 0.3 });
+      const pzrCyl = new THREE.Mesh(pzrCylGeo, pzrMat);
+      pzrCyl.position.y = 4;
+      pzrGroup.add(pzrCyl);
+
+      const pzrTopGeo = new THREE.SphereGeometry(1.2, 24, 16, 0, Math.PI * 2, 0, Math.PI / 2);
+      const pzrTop = new THREE.Mesh(pzrTopGeo, pzrMat);
+      pzrTop.position.y = 8;
+      pzrGroup.add(pzrTop);
+
+      const heaterGeo = new THREE.CylinderGeometry(1.25, 1.25, 1.2, 24);
+      const heaterMat = new THREE.MeshBasicMaterial({ color: 0xff7700 });
+      const heater = new THREE.Mesh(heaterGeo, heaterMat);
+      heater.position.y = 1.2;
+      pzrGroup.add(heater);
+
+      const surgeGeo = new THREE.CylinderGeometry(0.25, 0.25, 4, 16);
+      const surgePipe = new THREE.Mesh(surgeGeo, new THREE.MeshStandardMaterial({ color: 0xd97706, metalness: 0.5 }));
+      surgePipe.position.set(-1.8, 0.8, 1.2);
+      surgePipe.rotation.z = Math.PI / 3;
+      pzrGroup.add(surgePipe);
+
+      pzrGroup.userData = { stageId: 2, name: "Pressuriser & Primary Loop Cushion (15.5 MPa)" };
+      interactiveMeshes.push(pzrGroup);
+      contGroup.add(pzrGroup);
+
+      // Primary Coolant Pump (RCP)
+      const rcpGeo = new THREE.CylinderGeometry(1.1, 1.3, 3.5, 24);
+      const rcpMat = new THREE.MeshStandardMaterial({ color: 0x1e3a8a, metalness: 0.7, roughness: 0.3 });
+      const rcp = new THREE.Mesh(rcpGeo, rcpMat);
+      rcp.position.set(-3.5, 3.5, 3.5);
+      contGroup.add(rcp);
+
+      // Primary Hot Leg Pipe (Red: 325°C liquid to SG)
+      const hotLegCurve = new THREE.CatmullRomCurve3([
+        new THREE.Vector3(-1.8, 5.5, 0),
+        new THREE.Vector3(-4.0, 5.5, -1.5),
+        new THREE.Vector3(-6.0, 3.8, -3.0)
+      ]);
+      const hotLegGeo = new THREE.TubeGeometry(hotLegCurve, 20, 0.55, 16, false);
+      const hotLegMat = new THREE.MeshStandardMaterial({ color: 0xd97706, roughness: 0.4, metalness: 0.4 });
+      const hotLeg = new THREE.Mesh(hotLegGeo, hotLegMat);
+      contGroup.add(hotLeg);
+
+      // Primary Cold Leg Pipe (Blue: 292°C liquid return to RPV)
+      const coldLegCurve = new THREE.CatmullRomCurve3([
+        new THREE.Vector3(-6.0, 3.5, -3.0),
+        new THREE.Vector3(-3.5, 2.5, 3.5),
+        new THREE.Vector3(-1.8, 4.2, 0)
+      ]);
+      const coldLegGeo = new THREE.TubeGeometry(coldLegCurve, 20, 0.55, 16, false);
+      const coldLegMat = new THREE.MeshStandardMaterial({ color: 0x0284c7, roughness: 0.4, metalness: 0.4 });
+      const coldLeg = new THREE.Mesh(coldLegGeo, coldLegMat);
+      contGroup.add(coldLeg);
+
+      scene.add(contGroup);
+    }
+
+    function buildTurbineHallAndGenerators() {
+      const tbHallGroup = new THREE.Group();
+      tbHallGroup.position.set(3, 0, 0);
+
+      const hallFloorGeo = new THREE.BoxGeometry(32, 1.2, 22);
+      const hallFloorMat = new THREE.MeshStandardMaterial({ color: 0x1f2937, roughness: 0.8 });
+      const hallFloor = new THREE.Mesh(hallFloorGeo, hallFloorMat);
+      hallFloor.position.set(0, 0.6, 0);
+      hallFloor.receiveShadow = true;
+      tbHallGroup.add(hallFloor);
+
+      const frameMat = new THREE.MeshStandardMaterial({ color: 0x475569, metalness: 0.7, roughness: 0.3 });
+      for (let x = -14; x <= 14; x += 7) {
+        const p1 = new THREE.Mesh(new THREE.BoxGeometry(0.6, 16, 0.6), frameMat);
+        p1.position.set(x, 8, -10.5);
+        const p2 = new THREE.Mesh(new THREE.BoxGeometry(0.6, 16, 0.6), frameMat);
+        p2.position.set(x, 8, 10.5);
+        const roofBeam = new THREE.Mesh(new THREE.BoxGeometry(0.6, 0.6, 21.6), frameMat);
+        roofBeam.position.set(x, 16, 0);
+        tbHallGroup.add(p1, p2, roofBeam);
+      }
+
+      const steamLineCurve = new THREE.CatmullRomCurve3([
+        new THREE.Vector3(-25, 18, -3),
+        new THREE.Vector3(-14, 18, -3),
+        new THREE.Vector3(-9, 10, 0),
+        new THREE.Vector3(-6, 7.5, 0)
+      ]);
+      const steamLineGeo = new THREE.TubeGeometry(steamLineCurve, 32, 0.65, 16, false);
+      const steamLineMat = new THREE.MeshStandardMaterial({ color: 0xe2e8f0, roughness: 0.3, metalness: 0.7 });
+      const steamLine = new THREE.Mesh(steamLineGeo, steamLineMat);
+      scene.add(steamLine);
+
+      const pedGeo = new THREE.BoxGeometry(26, 4.0, 8);
+      const pedMat = new THREE.MeshStandardMaterial({ color: 0x334155, roughness: 0.9 });
+      const ped = new THREE.Mesh(pedGeo, pedMat);
+      ped.position.set(0, 2.6, 0);
+      ped.receiveShadow = true;
+      tbHallGroup.add(ped);
+
+      const shaftGeo = new THREE.CylinderGeometry(0.35, 0.35, 25, 24);
+      const shaftMat = new THREE.MeshStandardMaterial({ color: 0x94a3b8, metalness: 0.9, roughness: 0.1 });
+      const mainShaft = new THREE.Mesh(shaftGeo, shaftMat);
+      mainShaft.rotation.z = Math.PI / 2;
+      mainShaft.position.set(0, 5.8, 0);
+      tbHallGroup.add(mainShaft);
+
+      // HP Turbine
+      const hpGroup = new THREE.Group();
+      hpGroup.position.set(-6.5, 5.8, 0);
+
+      const hpCaseGeo = new THREE.CylinderGeometry(1.4, 2.0, 3.2, 24, 1, true, Math.PI * 0.5, Math.PI);
+      const caseMat = new THREE.MeshStandardMaterial({ color: 0x475569, metalness: 0.6, roughness: 0.3, side: THREE.DoubleSide });
+      const hpCase = new THREE.Mesh(hpCaseGeo, caseMat);
+      hpCase.rotation.z = Math.PI / 2;
+      hpGroup.add(hpCase);
+
+      const hpRotor = new THREE.Group();
+      for (let i = -1.2; i <= 1.2; i += 0.4) {
+        const diskR = 0.8 + (i + 1.2) * 0.3;
+        const disk = new THREE.Mesh(new THREE.CylinderGeometry(diskR, diskR, 0.1, 16), new THREE.MeshStandardMaterial({ color: 0x0ea5e9, metalness: 0.8, roughness: 0.2 }));
+        disk.rotation.z = Math.PI / 2;
+        disk.position.x = i;
+        hpRotor.add(disk);
+      }
+      hpGroup.add(hpRotor);
+      turbineRotors.push(hpRotor);
+
+      hpGroup.userData = { stageId: 4, name: "HP & LP Steam Turbines (Rankine Work Extraction)" };
+      interactiveMeshes.push(hpGroup);
+      tbHallGroup.add(hpGroup);
+
+      // LP Turbines
+      [-1.5, 3.5].forEach((lpX, idx) => {
+        const lpGroup = new THREE.Group();
+        lpGroup.position.set(lpX, 5.8, 0);
+
+        const lpCaseGeo = new THREE.CylinderGeometry(3.0, 1.8, 3.6, 24, 1, true, Math.PI * 0.5, Math.PI);
+        const lpCase = new THREE.Mesh(lpCaseGeo, caseMat);
+        lpCase.rotation.z = Math.PI / 2;
+        lpGroup.add(lpCase);
+
+        const lpRotor = new THREE.Group();
+        for (let bx = -1.4; bx <= 1.4; bx += 0.5) {
+          const br = 1.3 + Math.abs(bx) * 0.9;
+          const bladeDisk = new THREE.Mesh(new THREE.CylinderGeometry(br, br, 0.12, 20), new THREE.MeshStandardMaterial({ color: 0x38bdf8, metalness: 0.85, roughness: 0.15 }));
+          bladeDisk.rotation.z = Math.PI / 2;
+          bladeDisk.position.x = bx;
+          lpRotor.add(bladeDisk);
+        }
+        lpGroup.add(lpRotor);
+        turbineRotors.push(lpRotor);
+
+        lpGroup.userData = { stageId: 4, name: `LP Turbine ${idx + 1} (Double-Flow Expansion)` };
+        interactiveMeshes.push(lpGroup);
+        tbHallGroup.add(lpGroup);
+      });
+
+      // Synchronous Generator
+      const genGroup = new THREE.Group();
+      genGroup.position.set(9.2, 5.8, 0);
+
+      const genStatGeo = new THREE.CylinderGeometry(2.2, 2.2, 5.0, 32, 1, true, Math.PI * 0.5, Math.PI);
+      const genStatMat = new THREE.MeshStandardMaterial({ color: 0x1e293b, metalness: 0.5, roughness: 0.4, side: THREE.DoubleSide });
+      const genStator = new THREE.Mesh(genStatGeo, genStatMat);
+      genStator.rotation.z = Math.PI / 2;
+      genGroup.add(genStator);
+
+      const coilMat = new THREE.MeshStandardMaterial({ color: 0xb45309, metalness: 0.9, roughness: 0.15 });
+      for (let a = 0; a < Math.PI * 2; a += Math.PI / 6) {
+        const bar = new THREE.Mesh(new THREE.BoxGeometry(4.6, 0.2, 0.15), coilMat);
+        bar.position.set(0, Math.cos(a) * 1.8, Math.sin(a) * 1.8);
+        genGroup.add(bar);
+      }
+
+      const genRotorGeo = new THREE.CylinderGeometry(1.2, 1.2, 4.4, 20);
+      const genRotorMat = new THREE.MeshStandardMaterial({ color: 0x64748b, metalness: 0.8, roughness: 0.2 });
+      const genRotor = new THREE.Mesh(genRotorGeo, genRotorMat);
+      genRotor.rotation.z = Math.PI / 2;
+      genGroup.add(genRotor);
+      turbineRotors.push(genRotor);
+
+      const busMesh = new THREE.Mesh(new THREE.BoxGeometry(0.8, 0.8, 3.5), new THREE.MeshStandardMaterial({ color: 0xf59e0b }));
+      busMesh.position.set(0, -1.8, 3.0);
+      genGroup.add(busMesh);
+
+      genGroup.userData = { stageId: 5, name: "Synchronous Turbo-Generator (50 Hz Induction)" };
+      interactiveMeshes.push(genGroup);
+      tbHallGroup.add(genGroup);
+
+      // Surface Condenser
+      const condGroup = new THREE.Group();
+      condGroup.position.set(1.0, 1.5, 0);
+      const condBox = new THREE.Mesh(new THREE.BoxGeometry(11, 2.5, 7.2), new THREE.MeshStandardMaterial({ color: 0x1e3a8a, metalness: 0.7, roughness: 0.3 }));
+      condGroup.add(condBox);
+
+      const cwInCurve = new THREE.CatmullRomCurve3([
+        new THREE.Vector3(1.0, 1.5, -3.6),
+        new THREE.Vector3(10.0, 1.0, -10.0),
+        new THREE.Vector3(20.0, 1.0, -12.0)
+      ]);
+      const cwPipe = new THREE.Mesh(new THREE.TubeGeometry(cwInCurve, 24, 0.7, 16, false), new THREE.MeshStandardMaterial({ color: 0x0369a1 }));
+      scene.add(cwPipe);
+
+      condGroup.userData = { stageId: 6, name: "Surface Condenser (Rankine Vacuum Closure @ 5 kPa)" };
+      interactiveMeshes.push(condGroup);
+      tbHallGroup.add(condGroup);
+
+      scene.add(tbHallGroup);
+    }
+
+    function buildOutdoorSwitchyard() {
+      const swGroup = new THREE.Group();
+      swGroup.position.set(16, 0, 14);
+
+      const yard = new THREE.Mesh(new THREE.BoxGeometry(14, 0.3, 14), new THREE.MeshStandardMaterial({ color: 0x1f242d, roughness: 0.95 }));
+      yard.position.y = 0.15;
+      yard.receiveShadow = true;
+      swGroup.add(yard);
+
+      const transBody = new THREE.Mesh(new THREE.BoxGeometry(4.5, 3.8, 3.2), new THREE.MeshStandardMaterial({ color: 0x334155, metalness: 0.6 }));
+      transBody.position.set(-2, 2.05, 0);
+      transBody.castShadow = true;
+      swGroup.add(transBody);
+
+      for (let b = -1.2; b <= 1.2; b += 1.2) {
+        const bush = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.25, 1.8, 12), new THREE.MeshStandardMaterial({ color: 0x92400e, roughness: 0.3 }));
+        bush.position.set(-2 + b, 4.6, 0);
+        swGroup.add(bush);
+      }
+
+      const pylonGroup = new THREE.Group();
+      pylonGroup.position.set(3.5, 0, 0);
+      const pylonMat = new THREE.MeshStandardMaterial({ color: 0x64748b, metalness: 0.8, roughness: 0.2 });
+
+      const pylonH = 22;
+      const leg1 = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.12, pylonH, 8), pylonMat);
+      leg1.position.set(-1.2, pylonH / 2, -1.2);
+      const leg2 = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.12, pylonH, 8), pylonMat);
+      leg2.position.set(1.2, pylonH / 2, -1.2);
+      const leg3 = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.12, pylonH, 8), pylonMat);
+      leg3.position.set(-1.2, pylonH / 2, 1.2);
+      const leg4 = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.12, pylonH, 8), pylonMat);
+      leg4.position.set(1.2, pylonH / 2, 1.2);
+      pylonGroup.add(leg1, leg2, leg3, leg4);
+
+      const arm1 = new THREE.Mesh(new THREE.BoxGeometry(7.0, 0.2, 0.4), pylonMat);
+      arm1.position.set(0, 18, 0);
+      const arm2 = new THREE.Mesh(new THREE.BoxGeometry(5.5, 0.2, 0.4), pylonMat);
+      arm2.position.set(0, 20.5, 0);
+      pylonGroup.add(arm1, arm2);
+
+      swGroup.add(pylonGroup);
+
+      swGroup.userData = { stageId: 5, name: "Main Step-Up Transformer & 400 kV Grid Connection" };
+      interactiveMeshes.push(swGroup);
+      scene.add(swGroup);
+    }
+
+    function buildCoolingTower() {
+      const ctGroup = new THREE.Group();
+      ctGroup.position.set(24, 0, -12);
+
+      const points = [];
+      const height = 32;
+      const yThroat = 21;
+      const rThroat = 6.2;
+      const b = 14;
+
+      for (let y = 2.5; y <= height; y += 1.0) {
+        const r = rThroat * Math.sqrt(1 + Math.pow((y - yThroat) / b, 2));
+        points.push(new THREE.Vector2(r, y));
+      }
+
+      const latheGeo = new THREE.LatheGeometry(points, 48, Math.PI * 0.4, Math.PI * 1.35);
+      const latheMat = new THREE.MeshStandardMaterial({
+        color: 0x94a3b8,
+        roughness: 0.85,
+        metalness: 0.1,
+        side: THREE.DoubleSide
+      });
+      const towerMesh = new THREE.Mesh(latheGeo, latheMat);
+      towerMesh.castShadow = true;
+      towerMesh.receiveShadow = true;
+      ctGroup.add(towerMesh);
+      window.coolingTowerMesh = towerMesh;
+
+      const stiltMat = new THREE.MeshStandardMaterial({ color: 0x475569 });
+      for (let a = 0; a < Math.PI * 2; a += Math.PI / 10) {
+        const stilt = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.18, 3.2, 8), stiltMat);
+        stilt.position.set(Math.cos(a) * 9.5, 1.4, Math.sin(a) * 9.5);
+        stilt.rotation.z = Math.sin(a) * 0.2;
+        ctGroup.add(stilt);
+      }
+
+      const basinWater = new THREE.Mesh(new THREE.CylinderGeometry(9.2, 9.2, 0.4, 32), new THREE.MeshStandardMaterial({
+        color: 0x0284c7,
+        roughness: 0.1,
+        metalness: 0.8,
+        transparent: true,
+        opacity: 0.75
+      }));
+      basinWater.position.y = 0.5;
+      ctGroup.add(basinWater);
+
+      const header = new THREE.Mesh(new THREE.TorusGeometry(6.5, 0.25, 12, 32), new THREE.MeshStandardMaterial({ color: 0xd97706 }));
+      header.rotation.x = Math.PI / 2;
+      header.position.y = 4.2;
+      ctGroup.add(header);
+
+      const fillPack = new THREE.Mesh(new THREE.CylinderGeometry(7.5, 7.8, 1.2, 32), new THREE.MeshStandardMaterial({ color: 0x334155, roughness: 0.95 }));
+      fillPack.position.y = 3.2;
+      ctGroup.add(fillPack);
+
+      ctGroup.userData = { stageId: 6, name: "Hyperbolic Natural-Draught Cooling Tower (Atmospheric Sink)" };
+      interactiveMeshes.push(ctGroup);
+      scene.add(ctGroup);
+    }
+
+    function setupParticleSystems() {
+      // 1. Core Fast/Thermal Neutrons
+      const neutronCount = 120;
+      const nGeo = new THREE.BufferGeometry();
+      const nPos = new Float32Array(neutronCount * 3);
+      for (let i = 0; i < neutronCount * 3; i += 3) {
+        nPos[i] = -22 + (Math.random() - 0.5) * 3.6;
+        nPos[i + 1] = 4.5 + (Math.random() - 0.5) * 3.6;
+        nPos[i + 2] = (Math.random() - 0.5) * 3.6;
+      }
+      nGeo.setAttribute('position', new THREE.BufferAttribute(nPos, 3));
+      const nMat = new THREE.PointsMaterial({ color: 0xffffff, size: 0.35, transparent: true, opacity: 0.9 });
+      const neutronParticles = new THREE.Points(nGeo, nMat);
+      scene.add(neutronParticles);
+      animParticles.push({ type: 'neutrons', mesh: neutronParticles, count: neutronCount });
+
+      // 2. Primary Loop Flow Pulse Particles
+      const pCount = 70;
+      const pGeo = new THREE.BufferGeometry();
+      const pPos = new Float32Array(pCount * 3);
+      for (let i = 0; i < pCount; i++) {
+        pPos[i * 3] = -22;
+        pPos[i * 3 + 1] = 6.0;
+        pPos[i * 3 + 2] = 0;
+      }
+      pGeo.setAttribute('position', new THREE.BufferAttribute(pPos, 3));
+      const pMat = new THREE.PointsMaterial({ color: 0xf59e0b, size: 0.45, transparent: true, opacity: 0.85 });
+      const primPoints = new THREE.Points(pGeo, pMat);
+      scene.add(primPoints);
+      animParticles.push({
+        type: 'primaryFlow',
+        mesh: primPoints,
+        count: pCount,
+        progress: Array.from({ length: pCount }, (_, k) => k / pCount)
+      });
+
+      // 3. Nucleate Boiling Bubbles in Steam Generator
+      const bubbleCount = 90;
+      const bGeo = new THREE.BufferGeometry();
+      const bPos = new Float32Array(bubbleCount * 3);
+      const bData = [];
+      for (let i = 0; i < bubbleCount; i++) {
+        const bx = -28 + (Math.random() - 0.5) * 2.8;
+        const by = 4.0 + Math.random() * 8.0;
+        const bz = -3 + (Math.random() - 0.5) * 2.8;
+        bPos[i * 3] = bx;
+        bPos[i * 3 + 1] = by;
+        bPos[i * 3 + 2] = bz;
+        bData.push({ x: bx, y: by, z: bz, speed: 0.04 + Math.random() * 0.05 });
+      }
+      bGeo.setAttribute('position', new THREE.BufferAttribute(bPos, 3));
+      const bMat = new THREE.PointsMaterial({ color: 0x93c5fd, size: 0.35, transparent: true, opacity: 0.8 });
+      const bubbleSystem = new THREE.Points(bGeo, bMat);
+      scene.add(bubbleSystem);
+      steamBubbles = { mesh: bubbleSystem, data: bData };
+
+      // 4. Rising Evaporative Plume from Cooling Tower
+      const plumeCount = 180;
+      const plGeo = new THREE.BufferGeometry();
+      const plPos = new Float32Array(plumeCount * 3);
+      const plData = [];
+      for (let i = 0; i < plumeCount; i++) {
+        const py = 25 + Math.random() * 20;
+        const angle = Math.random() * Math.PI * 2;
+        const radius = (py - 15) * 0.35 * Math.random();
+        const px = 24 + Math.cos(angle) * radius;
+        const pz = -12 + Math.sin(angle) * radius;
+        plPos[i * 3] = px;
+        plPos[i * 3 + 1] = py;
+        plPos[i * 3 + 2] = pz;
+        plData.push({ x: px, y: py, z: pz, rad: radius, angle: angle, speed: 0.08 + Math.random() * 0.08 });
+      }
+      plGeo.setAttribute('position', new THREE.BufferAttribute(plPos, 3));
+      const plMat = new THREE.PointsMaterial({ color: 0xf1f5f9, size: 1.2, transparent: true, opacity: 0.45 });
+      const plumeMesh = new THREE.Points(plGeo, plMat);
+      scene.add(plumeMesh);
+      coolingTowerPlume = { mesh: plumeMesh, data: plData };
+    }
+
+    function setupInteraction() {
+      const raycaster = new THREE.Raycaster();
+      const mouse = new THREE.Vector2();
+      const tooltip = document.getElementById('hover-tooltip');
+
+      window.addEventListener('mousemove', (e) => {
+        mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
+        mouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
+
+        raycaster.setFromCamera(mouse, camera);
+        const hits = raycaster.intersectObjects(interactiveMeshes, true);
+
+        if (hits.length > 0) {
+          let topGroup = hits[0].object;
+          while (topGroup.parent && !topGroup.userData.stageId && topGroup.parent !== scene) {
+            topGroup = topGroup.parent;
+          }
+          if (topGroup.userData && topGroup.userData.name) {
+            tooltip.style.opacity = '1';
+            tooltip.style.left = e.clientX + 'px';
+            tooltip.style.top = e.clientY + 'px';
+            tooltip.innerText = `${topGroup.userData.name} (Click to inspect)`;
+            document.body.style.cursor = 'pointer';
+            return;
+          }
+        }
+        tooltip.style.opacity = '0';
+        document.body.style.cursor = 'default';
+      });
+
+      window.addEventListener('click', (e) => {
+        if (e.target.closest('#corner-hud') || e.target.closest('.top-bar') || e.target.closest('.bottom-nav') || e.target.closest('#context-modal')) {
+          return;
+        }
+
+        mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
+        mouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
+        raycaster.setFromCamera(mouse, camera);
+        const hits = raycaster.intersectObjects(interactiveMeshes, true);
+
+        if (hits.length > 0) {
+          let topGroup = hits[0].object;
+          while (topGroup.parent && !topGroup.userData.stageId && topGroup.parent !== scene) {
+            topGroup = topGroup.parent;
+          }
+          if (topGroup.userData && topGroup.userData.stageId !== undefined) {
+            setStage(topGroup.userData.stageId);
+          }
+        }
+      });
+    }
+
+    function flyCameraTo(targetPos, targetLookAt, durationSec) {
+      const startPos = camera.position.clone();
+      const startTarget = controls.target.clone();
+      const endPos = new THREE.Vector3(targetPos.x, targetPos.y, targetPos.z);
+      const endTarget = new THREE.Vector3(targetLookAt.x, targetLookAt.y, targetLookAt.z);
+
+      let elapsed = 0;
+      const duration = durationSec || 1.2;
+
+      camTween = {
+        update: (delta) => {
+          elapsed += delta;
+          const t = Math.min(1.0, elapsed / duration);
+          const ease = t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+
+          camera.position.lerpVectors(startPos, endPos, ease);
+          controls.target.lerpVectors(startTarget, endTarget, ease);
+
+          if (t >= 1.0) {
+            camTween = null;
+          }
+        }
+      };
+    }
+
+    function onWindowResize() {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    }
+
+    const clock = new THREE.Clock();
+    function animate() {
+      requestAnimationFrame(animate);
+      const delta = clock.getDelta();
+      const time = clock.getElapsedTime();
+
+      if (camTween) {
+        camTween.update(delta);
+      }
+      controls.update();
+
+      const spinSpeed = 15.0 * Math.min(1.2, Math.sqrt(plantState.relPower));
+      turbineRotors.forEach(r => {
+        r.rotation.x += spinSpeed * delta;
+      });
+
+      animParticles.forEach(p => {
+        if (p.type === 'neutrons') {
+          const positions = p.mesh.geometry.attributes.position.array;
+          for (let i = 0; i < p.count * 3; i += 3) {
+            positions[i] += (Math.random() - 0.5) * 0.15;
+            positions[i + 1] += (Math.random() - 0.5) * 0.15;
+            positions[i + 2] += (Math.random() - 0.5) * 0.15;
+
+            const dx = positions[i] - (-22);
+            const dz = positions[i + 2];
+            if (Math.hypot(dx, dz) > 2.0) {
+              positions[i] = -22 + (Math.random() - 0.5) * 1.5;
+              positions[i + 2] = (Math.random() - 0.5) * 1.5;
+            }
+            if (positions[i + 1] < 2.5 || positions[i + 1] > 6.8) {
+              positions[i + 1] = 4.5;
+            }
+          }
+          p.mesh.geometry.attributes.position.needsUpdate = true;
+        }
+
+        if (p.type === 'primaryFlow') {
+          const positions = p.mesh.geometry.attributes.position.array;
+          for (let i = 0; i < p.count; i++) {
+            p.progress[i] = (p.progress[i] + delta * 0.3 * plantState.relPower) % 1.0;
+            const prog = p.progress[i];
+            let px, py, pz;
+            if (prog < 0.5) {
+              const sub = prog / 0.5;
+              px = -22 + sub * (-6 - (-22));
+              py = 5.5 + Math.sin(sub * Math.PI) * 1.2;
+              pz = sub * (-3);
+            } else {
+              const sub = (prog - 0.5) / 0.5;
+              px = -6 + sub * (-22 - (-6));
+              py = 3.5 - Math.sin(sub * Math.PI) * 0.8;
+              pz = -3 + sub * 3;
+            }
+            positions[i * 3] = px;
+            positions[i * 3 + 1] = py;
+            positions[i * 3 + 2] = pz;
+          }
+          p.mesh.geometry.attributes.position.needsUpdate = true;
+        }
+      });
+
+      if (steamBubbles.mesh) {
+        const bPos = steamBubbles.mesh.geometry.attributes.position.array;
+        const bData = steamBubbles.data;
+        for (let i = 0; i < bData.length; i++) {
+          bData[i].y += bData[i].speed * (0.4 + plantState.relPower * 0.8);
+          if (bData[i].y > 14.5) {
+            bData[i].y = 4.0;
+          }
+          bPos[i * 3 + 1] = bData[i].y;
+        }
+        steamBubbles.mesh.geometry.attributes.position.needsUpdate = true;
+      }
+
+      if (coolingTowerPlume.mesh) {
+        const plPos = coolingTowerPlume.mesh.geometry.attributes.position.array;
+        const plData = coolingTowerPlume.data;
+        for (let i = 0; i < plData.length; i++) {
+          plData[i].y += plData[i].speed * (0.3 + plantState.relPower * 0.9);
+          plData[i].angle += 0.008;
+          const rad = (plData[i].y - 12) * 0.35;
+          plPos[i * 3] = 24 + Math.cos(plData[i].angle) * rad + Math.sin(time + i) * 0.5;
+          plPos[i * 3 + 1] = plData[i].y;
+          plPos[i * 3 + 2] = -12 + Math.sin(plData[i].angle) * rad;
+
+          if (plData[i].y > 48) {
+            plData[i].y = 22 + Math.random() * 4;
+          }
+        }
+        coolingTowerPlume.mesh.geometry.attributes.position.needsUpdate = true;
+      }
+
+      renderer.render(scene, camera);
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      initThree();
+
+      document.querySelectorAll('.stage-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          setStage(parseInt(btn.dataset.stage));
+        });
+      });
+
+      document.getElementById('nav-prev').addEventListener('click', () => setStage(plantState.activeStage - 1));
+      document.getElementById('nav-next').addEventListener('click', () => setStage(plantState.activeStage + 1));
+      document.getElementById('hud-btn-prev').addEventListener('click', () => setStage(plantState.activeStage - 1));
+      document.getElementById('hud-btn-next').addEventListener('click', () => setStage(plantState.activeStage + 1));
+
+      document.querySelectorAll('.hud-tab-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          plantState.activeTab = btn.dataset.tab;
+          renderHud();
+        });
+      });
+
+      const hud = document.getElementById('corner-hud');
+      const minBtn = document.getElementById('hud-min-btn');
+      minBtn.addEventListener('click', () => {
+        plantState.hudMinimized = !plantState.hudMinimized;
+        hud.classList.toggle('minimized', plantState.hudMinimized);
+        minBtn.innerText = plantState.hudMinimized ? '+' : '–';
+      });
+
+      const posBtn = document.getElementById('hud-pos-btn');
+      posBtn.addEventListener('click', () => {
+        plantState.hudDockBottom = !plantState.hudDockBottom;
+        hud.classList.toggle('dock-bottom', plantState.hudDockBottom);
+      });
+
+      const rodSlider = document.getElementById('rod-slider');
+      rodSlider.addEventListener('input', (e) => {
+        plantState.rodPos = parseInt(e.target.value);
+        updateReactivityModel();
+      });
+
+      document.getElementById('btn-scram').addEventListener('click', () => {
+        plantState.rodPos = 100;
+        rodSlider.value = 100;
+        updateReactivityModel();
+      });
+
+      const cutawayBtn = document.getElementById('btn-cutaway');
+      cutawayBtn.addEventListener('click', () => {
+        plantState.cutaway = !plantState.cutaway;
+        cutawayBtn.innerText = `Cutaway: ${plantState.cutaway ? 'ON' : 'OFF'}`;
+        cutawayBtn.classList.toggle('btn-active', plantState.cutaway);
+
+        if (window.containmentWall) window.containmentWall.visible = plantState.cutaway;
+        if (window.containmentDome) window.containmentDome.visible = plantState.cutaway;
+        if (window.coolingTowerMesh) window.coolingTowerMesh.visible = plantState.cutaway;
+      });
+
+      document.getElementById('btn-reset').addEventListener('click', () => {
+        setStage(0);
+      });
+
+      const modal = document.getElementById('context-modal');
+      document.getElementById('btn-context').addEventListener('click', () => {
+        modal.classList.remove('hidden');
+      });
+      document.getElementById('modal-close-btn').addEventListener('click', () => {
+        modal.classList.add('hidden');
+      });
+      document.getElementById('modal-start-btn').addEventListener('click', () => {
+        modal.classList.add('hidden');
+        setStage(1);
+      });
+
+      if (window.renderMathInElement) {
+        renderMathInElement(document.body, {
+          delimiters: [
+            { left: '$$', right: '$$', display: true },
+            { left: '$', right: '$', display: false }
+          ],
+          throwOnError: false
+        });
+      }
+    });
+  </script>
+</body>
+</html>
