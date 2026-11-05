@@ -101,7 +101,7 @@
     }
 
     .brand-subtitle {
-      font-size: 11px;
+      font-size: 12px;
       color: var(--text-muted);
       margin-top: 2px;
     }
@@ -163,11 +163,40 @@
       color: #fff;
     }
 
+    /* Tripped state: reactor scrammed, rods locked fully in until the trip is reset */
+    .btn-scram.tripped {
+      background: var(--accent-red);
+      border-color: var(--accent-red);
+      color: #fff;
+      box-shadow: 0 0 14px rgba(239, 68, 68, 0.6);
+      animation: scram-pulse 1.4s ease-in-out infinite;
+    }
+
+    .control-box.tripped {
+      border-color: rgba(239, 68, 68, 0.6);
+    }
+
+    @keyframes scram-pulse {
+      0%, 100% { box-shadow: 0 0 6px rgba(239, 68, 68, 0.4); }
+      50% { box-shadow: 0 0 18px rgba(239, 68, 68, 0.85); }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .btn-scram.tripped { animation: none; }
+    }
+
+    .btn:disabled,
+    .nav-arrow:disabled {
+      opacity: 0.35;
+      cursor: not-allowed;
+      pointer-events: none;
+    }
+
     .slider-group {
       display: flex;
       align-items: center;
       gap: 8px;
-      font-size: 11px;
+      font-size: 12px;
       color: var(--text-muted);
     }
 
@@ -187,6 +216,15 @@
       background: var(--accent-cyan);
       cursor: pointer;
       box-shadow: 0 0 8px var(--accent-cyan);
+    }
+
+    .slider-group input[type="range"]:disabled {
+      opacity: 0.45;
+    }
+    .slider-group input[type="range"]:disabled::-webkit-slider-thumb {
+      background: var(--accent-red);
+      box-shadow: none;
+      cursor: not-allowed;
     }
 
     /* Bottom Stage Navigation */
@@ -294,9 +332,13 @@
       display: flex;
       align-items: center;
       gap: 10px;
+      flex: 1;
+      min-width: 0;
     }
 
     .hud-stage-badge {
+      white-space: nowrap;
+      flex-shrink: 0;
       font-size: 11px;
       font-weight: 800;
       padding: 3px 8px;
@@ -310,10 +352,20 @@
     .hud-stage-name {
       font-size: 13px;
       font-weight: 700;
+      line-height: 1.3;
       color: #fff;
+      min-width: 0;
+    }
+
+    /* Collapsed bar is a single 48px row, so the name truncates there */
+    #corner-hud.minimized .hud-stage-name {
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
 
     .hud-controls {
+      flex-shrink: 0;
       display: flex;
       align-items: center;
       gap: 6px;
@@ -352,7 +404,7 @@
       background: transparent;
       border: none;
       color: var(--text-muted);
-      font-size: 11px;
+      font-size: 12px;
       font-weight: 700;
       letter-spacing: 0.4px;
       cursor: pointer;
@@ -413,7 +465,7 @@
     }
 
     .equation-label {
-      font-size: 10px;
+      font-size: 11px;
       color: var(--text-muted);
       text-transform: uppercase;
       letter-spacing: 0.5px;
@@ -433,7 +485,7 @@
       padding: 6px 8px;
       color: var(--text-muted);
       border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-      font-size: 10px;
+      font-size: 11px;
       text-transform: uppercase;
       letter-spacing: 0.5px;
     }
@@ -602,7 +654,7 @@
       color: #fff;
       padding: 5px 12px;
       border-radius: 6px;
-      font-size: 11px;
+      font-size: 12px;
       font-weight: 700;
       opacity: 0;
       transform: translate(-50%, -130%);
@@ -625,6 +677,118 @@
         max-width: 95vw;
         overflow-x: auto;
         justify-content: flex-start;
+      }
+      /* HUD is always a bottom sheet here, so the dock toggle does nothing */
+      #hud-pos-btn {
+        display: none;
+      }
+    }
+
+    /* Mid widths: drop the brand subtitle and badge so the top controls fit on one row */
+    @media (min-width: 901px) and (max-width: 1200px) {
+      .brand-subtitle,
+      .brand-title .badge {
+        display: none;
+      }
+    }
+
+    .btn,
+    .slider-group {
+      white-space: nowrap;
+    }
+
+    @media (max-width: 900px) {
+      /* Top bar stacks: brand, then rods + SCRAM, then view buttons — all on screen */
+      header.top-bar {
+        top: 10px;
+        left: 10px;
+        right: 10px;
+        flex-direction: column;
+        align-items: stretch;
+        gap: 8px;
+      }
+      .brand-group {
+        padding: 6px 12px;
+      }
+      .brand-subtitle {
+        display: none;
+      }
+      .top-controls {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 8px;
+      }
+      .control-box {
+        padding: 6px 10px;
+        gap: 8px;
+      }
+      .slider-group {
+        flex: 1;
+        min-width: 0;
+      }
+      .slider-group input[type="range"] {
+        flex: 1;
+        width: auto;
+        min-width: 0;
+      }
+      .control-box:last-child .btn {
+        flex: 1;
+        justify-content: center;
+        padding: 8px 6px;
+      }
+
+      /* Stage nav: arrows plus the current stage only, no sideways scrolling */
+      nav.bottom-nav {
+        left: 10px;
+        right: 10px;
+        bottom: 10px;
+        max-width: none;
+        transform: none;
+        overflow: visible;
+        justify-content: space-between;
+      }
+      .stage-btn {
+        display: none;
+      }
+      .stage-btn.active {
+        display: block;
+        flex: 1;
+        text-align: center;
+      }
+      .nav-arrow {
+        width: 40px;
+        height: 40px;
+        flex-shrink: 0;
+      }
+
+      #corner-hud {
+        left: 10px;
+        right: 10px;
+        width: auto;
+        bottom: 70px;
+        max-height: 46vh;
+      }
+
+      #context-modal {
+        padding: 10px;
+      }
+      .modal-header {
+        padding: 14px 16px;
+      }
+      .modal-header h2 {
+        font-size: 16px;
+      }
+      .modal-body {
+        padding: 16px;
+      }
+      .physics-grid {
+        grid-template-columns: 1fr;
+      }
+      .modal-footer {
+        padding: 14px 16px;
+      }
+      .btn-primary {
+        width: 100%;
       }
     }
   </style>
@@ -665,7 +829,7 @@
 
   <!-- Bottom Stage Navigation Pill -->
   <nav class="bottom-nav">
-    <button class="nav-arrow" id="nav-prev" title="Previous Stage">&#8592;</button>
+    <button class="nav-arrow" id="nav-prev" title="Previous Stage" aria-label="Previous stage" disabled>&#8592;</button>
     <button class="stage-btn active" data-stage="0">0. Overview</button>
     <button class="stage-btn" data-stage="1">1. Fission Core</button>
     <button class="stage-btn" data-stage="2">2. Primary Loop</button>
@@ -673,7 +837,7 @@
     <button class="stage-btn" data-stage="4">4. Turbines</button>
     <button class="stage-btn" data-stage="5">5. Generator</button>
     <button class="stage-btn" data-stage="6">6. Cooling</button>
-    <button class="nav-arrow" id="nav-next" title="Next Stage">&#8594;</button>
+    <button class="nav-arrow" id="nav-next" title="Next Stage" aria-label="Next stage">&#8594;</button>
   </nav>
 
   <!-- THE CORNER HUD WINDOW (Equations, Science, Explanations, Live Telemetry) -->
@@ -690,9 +854,9 @@
     </div>
 
     <div class="hud-tabs">
-      <button class="hud-tab-btn active" data-tab="science">Science & Principles</button>
-      <button class="hud-tab-btn" data-tab="equations">Governing Equations</button>
-      <button class="hud-tab-btn" data-tab="telemetry">Live Telemetry</button>
+      <button class="hud-tab-btn active" data-tab="science" title="Science & Principles">Science</button>
+      <button class="hud-tab-btn" data-tab="equations" title="Governing Equations">Equations</button>
+      <button class="hud-tab-btn" data-tab="telemetry" title="Live Telemetry">Telemetry</button>
     </div>
 
     <div class="hud-body" id="hud-content">
@@ -700,9 +864,9 @@
     </div>
 
     <div class="hud-footer">
-      <button class="btn" id="hud-btn-prev" style="font-size: 11px;">&#8592; Previous</button>
-      <span style="font-size: 11px; color: var(--text-muted); font-family: var(--font-mono);" id="hud-counter">0 / 6</span>
-      <button class="btn btn-active" id="hud-btn-next" style="font-size: 11px;">Next Stage &#8594;</button>
+      <button class="btn" id="hud-btn-prev" style="font-size: 12px;" disabled>&#8592; Previous</button>
+      <span style="font-size: 12px; color: var(--text-muted); font-family: var(--font-mono);" id="hud-counter">Overview</span>
+      <button class="btn btn-active" id="hud-btn-next" style="font-size: 12px;">Next Stage &#8594;</button>
     </div>
   </aside>
 
@@ -1003,6 +1167,7 @@
       kEff: 1.0000,
       relPower: 1.00,
       cutaway: true,
+      tripped: false,
       hudMinimized: false,
       hudDockBottom: false
     };
@@ -1039,7 +1204,12 @@
       const data = stagesData[plantState.activeStage];
       document.getElementById('hud-badge').innerText = data.badge;
       document.getElementById('hud-name').innerText = data.name;
-      document.getElementById('hud-counter').innerText = `${plantState.activeStage} / 6`;
+      const idx = plantState.activeStage;
+      const lastStage = stagesData.length - 1;
+      document.getElementById('hud-counter').innerText =
+        idx === 0 ? 'Overview' : `Stage ${idx} of ${lastStage}`;
+      ['hud-btn-prev', 'nav-prev'].forEach(id => { document.getElementById(id).disabled = idx === 0; });
+      ['hud-btn-next', 'nav-next'].forEach(id => { document.getElementById(id).disabled = idx === lastStage; });
 
       document.querySelectorAll('.hud-tab-btn').forEach(btn => {
         btn.classList.toggle('active', btn.dataset.tab === plantState.activeTab);
@@ -1074,7 +1244,7 @@
             <tr>
               <th>Physical Parameter</th>
               <th style="text-align: right;">Calculated Value</th>
-              <th style="text-align: right; width: 60px;">Unit</th>
+              <th style="text-align: right; width: 72px;">Unit</th>
             </tr>
           </thead>
           <tbody>
@@ -1084,7 +1254,7 @@
           <tr>
             <td>${r.label}</td>
             <td style="text-align: right;" class="telemetry-val ${r.highlight ? 'telemetry-highlight' : ''}">${r.val}</td>
-            <td style="text-align: right; color: var(--text-muted); font-family: var(--font-mono); font-size: 10px;">${r.unit}</td>
+            <td style="text-align: right; color: var(--text-muted); font-family: var(--font-mono); font-size: 11px; white-space: nowrap;">${r.unit}</td>
           </tr>
         `;
       });
@@ -1759,6 +1929,13 @@
       const tooltip = document.getElementById('hover-tooltip');
 
       window.addEventListener('mousemove', (e) => {
+        // Never show 3D hover hints while the pointer is over the UI panels
+        if (e.target.closest && e.target.closest('#corner-hud, .top-bar, .bottom-nav, #context-modal')) {
+          tooltip.style.opacity = '0';
+          document.body.style.cursor = 'default';
+          return;
+        }
+
         mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
         mouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
 
@@ -1771,10 +1948,13 @@
             topGroup = topGroup.parent;
           }
           if (topGroup.userData && topGroup.userData.name) {
-            tooltip.style.opacity = '1';
-            tooltip.style.left = e.clientX + 'px';
-            tooltip.style.top = e.clientY + 'px';
             tooltip.innerText = `${topGroup.userData.name} (Click to inspect)`;
+            // Keep the centred tooltip fully inside the viewport
+            const half = tooltip.offsetWidth / 2;
+            const x = Math.min(Math.max(e.clientX, half + 8), window.innerWidth - half - 8);
+            tooltip.style.opacity = '1';
+            tooltip.style.left = x + 'px';
+            tooltip.style.top = Math.max(e.clientY, 48) + 'px';
             document.body.style.cursor = 'pointer';
             return;
           }
@@ -1973,10 +2153,24 @@
         updateReactivityModel();
       });
 
-      document.getElementById('btn-scram').addEventListener('click', () => {
-        plantState.rodPos = 100;
-        rodSlider.value = 100;
-        updateReactivityModel();
+      // SCRAM latches a trip: rods drop fully in and the slider locks until the trip is reset.
+      const scramBtn = document.getElementById('btn-scram');
+      const rodBox = scramBtn.closest('.control-box');
+      scramBtn.addEventListener('click', () => {
+        plantState.tripped = !plantState.tripped;
+        if (plantState.tripped) {
+          plantState.rodPos = 100;
+          rodSlider.value = 100;
+          updateReactivityModel();
+        }
+        rodSlider.disabled = plantState.tripped;
+        scramBtn.classList.toggle('tripped', plantState.tripped);
+        rodBox.classList.toggle('tripped', plantState.tripped);
+        scramBtn.setAttribute('aria-pressed', String(plantState.tripped));
+        scramBtn.innerText = plantState.tripped ? 'TRIPPED · Reset' : 'SCRAM';
+        scramBtn.title = plantState.tripped
+          ? 'Reactor tripped. Click to reset the trip and regain control-rod movement'
+          : 'Immediate Reactor Trip (Full Rod Insertion)';
       });
 
       const cutawayBtn = document.getElementById('btn-cutaway');
@@ -2003,7 +2197,7 @@
       });
       document.getElementById('modal-start-btn').addEventListener('click', () => {
         modal.classList.add('hidden');
-        setStage(1);
+        setStage(0);
       });
 
       if (window.renderMathInElement) {
